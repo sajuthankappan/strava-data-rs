@@ -61,8 +61,8 @@ pub struct DetailedActivity {
   pub timezone: Option<String>,
 
   /// The UTC offset of the local timezone
-  #[serde(rename = "<UtcOffset>")]
-  pub utc_offset: Option<i32>,
+  #[serde(rename = "utc_offset")]
+  pub utc_offset: Option<f32>,
   
   //#[serde(rename = "start_latlng")]
   //start_latlng: Option<models::LatLng>,
