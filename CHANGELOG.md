@@ -1,3 +1,7 @@
+## 0.2.3
+
+* Fix: wasm fixes for new models
+
 ## 0.2.2
 
 * Add SummaryAthlete model
