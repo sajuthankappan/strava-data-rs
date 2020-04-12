@@ -1,6 +1,3 @@
-summary_athlete
-
-
 ## 0.2.2
 
 * Add SummaryAthlete model
