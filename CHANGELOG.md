@@ -1,3 +1,10 @@
+summary_athlete
+
+
+## 0.2.2
+
+* Add SummaryAthlete model
+
 ## 0.2.1
 
 * Fix: Export DetailedAthlete model and added additional missed models
