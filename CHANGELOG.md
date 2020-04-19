@@ -1,18 +1,26 @@
+## 0.3.0
+
+Released 2020-04-20.
+
+### Added
+
+* Added get_logged_in_athlete_activities
+
 ## 0.2.3
 
-* Fix: wasm fixes for new models
+* Fixed: wasm fixes for new models
 
 ## 0.2.2
 
-* Add SummaryAthlete model
+* Added SummaryAthlete model
 
 ## 0.2.1
 
-* Fix: Export DetailedAthlete model and added additional missed models
+* Fixed: Export DetailedAthlete model and added additional missed models
 
 ## 0.2.0
 
-* Add DetailedAthlete model
+* Added DetailedAthlete model
 
 ## 0.1.0
 
