@@ -16,7 +16,7 @@ fn test_get_activity_by_id() {
     let strava_activity = task::block_on(
         strava_api_client
             .activities_api
-            .get_activity_by_id(activity_id, access_token),
+            .get_activity_by_id(activity_id, &access_token),
     )
     .unwrap();
     dbg!(strava_activity);
@@ -37,7 +37,7 @@ fn test_get_logged_in_athlete_activities() {
     let strava_activities = task::block_on(
         strava_api_client
             .activities_api
-            .get_logged_in_athlete_activities(before, after, page, per_page, access_token),
+            .get_logged_in_athlete_activities(before, after, page, per_page, &access_token),
     )
     .unwrap();
     dbg!(strava_activities);
