@@ -19,7 +19,7 @@ impl ActivitiesApi {
     pub async fn get_activity_by_id(
         &self,
         id: i64,
-        access_token: String,
+        access_token: &String,
     ) -> Result<DetailedActivity, Box<dyn std::error::Error + Send + Sync + 'static>> {
         debug!("get_activity_by_id {}", id);
         let uri = format!("{}/activities/{id}", self.configuration.base_path, id = id);
@@ -36,7 +36,7 @@ impl ActivitiesApi {
         after: i32,
         page: i32,
         per_page: i32,
-        access_token: String,
+        access_token: &String,
     ) -> Result<Vec<DetailedActivity>, Box<dyn std::error::Error + Send + Sync + 'static>> {
         debug!("get_logged_in_athlete_activities");
         let uri = format!(

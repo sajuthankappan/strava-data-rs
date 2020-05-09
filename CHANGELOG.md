@@ -1,3 +1,7 @@
+## 0.3.1
+
+* Change access_token as ref
+
 ## 0.3.0
 
 Released 2020-04-20.
