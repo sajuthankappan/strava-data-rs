@@ -1,3 +1,7 @@
+## 0.3.2
+
+* Correct dev-dependencies to remove async-std from dependencies
+
 ## 0.3.1
 
 * Change access_token as ref
