@@ -1,11 +1,10 @@
 extern crate strava_data;
 
-use async_std::task;
 use std::env;
 use strava_data::{ApiClient, Configuration};
 
-#[test]
-fn test_get_activity_by_id() {
+#[tokio::test]
+async fn test_get_activity_by_id() {
     env_logger::init();
 
     let activity_id = env::var("ACTIVITY_ID").unwrap().parse().unwrap();
@@ -13,17 +12,16 @@ fn test_get_activity_by_id() {
 
     let strava_api_configuration = Configuration::new();
     let strava_api_client = ApiClient::new(strava_api_configuration);
-    let strava_activity = task::block_on(
-        strava_api_client
-            .activities_api
-            .get_activity_by_id(activity_id, &access_token),
-    )
-    .unwrap();
+    let strava_activity = strava_api_client
+        .activities_api
+        .get_activity_by_id(activity_id, &access_token)
+        .await
+        .unwrap();
     dbg!(strava_activity);
 }
 
-#[test]
-fn test_get_logged_in_athlete_activities() {
+#[tokio::test]
+async fn test_get_logged_in_athlete_activities() {
     env_logger::init();
 
     let before = env::var("BEFORE").unwrap().parse().unwrap();
@@ -34,11 +32,10 @@ fn test_get_logged_in_athlete_activities() {
 
     let strava_api_configuration = Configuration::new();
     let strava_api_client = ApiClient::new(strava_api_configuration);
-    let strava_activities = task::block_on(
-        strava_api_client
-            .activities_api
-            .get_logged_in_athlete_activities(before, after, page, per_page, &access_token),
-    )
-    .unwrap();
+    let strava_activities = strava_api_client
+        .activities_api
+        .get_logged_in_athlete_activities(before, after, page, per_page, &access_token)
+        .await
+        .unwrap();
     dbg!(strava_activities);
 }
