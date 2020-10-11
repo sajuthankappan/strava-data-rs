@@ -1,3 +1,7 @@
+## 0.4.1
+
+* Update get_activity_by_id to return option instead of just result
+
 ## 0.3.2
 
 * Correct dev-dependencies to remove async-std from dependencies

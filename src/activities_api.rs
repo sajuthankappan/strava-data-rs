@@ -20,7 +20,7 @@ impl ActivitiesApi {
         &self,
         id: i64,
         access_token: &String,
-    ) -> Result<DetailedActivity, Box<dyn std::error::Error + Send + Sync + 'static>> {
+    ) -> Result<Option<DetailedActivity>, Box<dyn std::error::Error + Send + Sync + 'static>> {
         debug!("get_activity_by_id {}", id);
         let url = format!("{}/activities/{id}", self.configuration.base_path, id = id);
         let authorization = format!("Bearer {}", access_token);
@@ -31,12 +31,16 @@ impl ActivitiesApi {
             .await?;
 
         if res.status().clone() != StatusCode::OK {
+            if (res.status().clone()) == StatusCode::NOT_FOUND {
+                log::warn!("activity {} not found", id);
+                return Ok(None);
+            }
             log::error!("{:?}", res);
             return Err(From::from("Error code not ok"));
         }
 
         let activity = res.json::<DetailedActivity>().await?;
-        Ok(activity)
+        Ok(Some(activity))
     }
 
     pub async fn get_logged_in_athlete_activities(
