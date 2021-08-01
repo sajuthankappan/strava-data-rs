@@ -1,3 +1,7 @@
+## 0.5.0
+
+* Upgrade reqwest to 0.11.4
+
 ## 0.4.1
 
 * Update get_activity_by_id to return option instead of just result

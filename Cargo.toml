@@ -1,6 +1,6 @@
 [package]
 name = "strava-data"
-version = "0.4.1"
+version = "0.5.0"
 authors = ["Saju Thankappan <sajuthankappan@gmail.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -17,12 +17,13 @@ wasm = ["wasm-bindgen"]
 
 [dependencies]
 log = "0.4.8"
-reqwest = { version = "0.10.8", features = ["json"] }
+reqwest = { version = "0.11.4", features = ["json"] }
 serde = { version = "1.0.116", features = ["derive"] }
 serde_json = "1.0.58"
 getset = "0.1.1"
 wasm-bindgen = { version = "0.2.68", optional = true }
 
 [dev-dependencies]
-env_logger = "0.7.1"
-tokio = { version = "0.2.22", features = ["macros"] }
+dotenv = "0.15.0"
+env_logger = "0.9.0"
+tokio = { version = "1.9.0", features = ["macros"] }
