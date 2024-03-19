@@ -1,3 +1,7 @@
+## 0.6.1
+
+* Add models for webhooks processing
+
 ## 0.6.0
 
 * Remove getset dependency
