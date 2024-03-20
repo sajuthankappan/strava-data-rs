@@ -1,3 +1,7 @@
+## 0.6.4
+
+* Fix visibilty attributes of new webhook models
+
 ## 0.6.3
 
 * Add additional models for webhooks processing

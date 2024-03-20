@@ -19,7 +19,7 @@ pub struct WebhookVerificationResponse {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct WebhookEventData {
+pub struct WebhookEventData {
     object_type: WebhookEventDataObjectType,
     object_id: i64,
     aspect_type: WebhookEventDataAspectType,
@@ -30,7 +30,7 @@ struct WebhookEventData {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct WebhookEventDataUpdates {
+pub struct WebhookEventDataUpdates {
     authorized: Option<String>,
 }
 
