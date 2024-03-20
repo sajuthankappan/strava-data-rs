@@ -11,9 +11,7 @@ pub struct ActivitiesApi {
 
 impl ActivitiesApi {
     pub fn new(configuration: Rc<Configuration>) -> ActivitiesApi {
-        ActivitiesApi {
-            configuration: configuration,
-        }
+        ActivitiesApi { configuration }
     }
 
     pub async fn get_activity_by_id(
@@ -30,8 +28,8 @@ impl ActivitiesApi {
             .send()
             .await?;
 
-        if res.status().clone() != StatusCode::OK {
-            if (res.status().clone()) == StatusCode::NOT_FOUND {
+        if res.status() != StatusCode::OK {
+            if res.status() == StatusCode::NOT_FOUND {
                 log::warn!("activity {} not found", id);
                 return Ok(None);
             }
@@ -63,7 +61,7 @@ impl ActivitiesApi {
             .send()
             .await?;
 
-        if res.status().clone() != StatusCode::OK {
+        if res.status() != StatusCode::OK {
             log::error!("{:?}", res);
             return Err(From::from("Error code not ok"));
         }

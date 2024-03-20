@@ -1,3 +1,7 @@
+## 0.6.3
+
+* Add additional models for webhooks processing
+
 ## 0.6.2
 
 * Add hub.mode param for for webhooks verification params

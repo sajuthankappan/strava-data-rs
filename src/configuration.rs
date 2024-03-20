@@ -9,3 +9,9 @@ impl Configuration {
         }
     }
 }
+
+impl Default for Configuration {
+    fn default() -> Self {
+        Self::new()
+    }
+}
