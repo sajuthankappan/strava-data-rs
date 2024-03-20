@@ -20,18 +20,18 @@ pub struct WebhookVerificationResponse {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WebhookEventData {
-    object_type: WebhookEventDataObjectType,
-    object_id: i64,
-    aspect_type: WebhookEventDataAspectType,
-    updates: WebhookEventDataUpdates,
-    owner_id: i32,
-    subscription_id: i64,
-    event_time: i64,
+    pub object_type: WebhookEventDataObjectType,
+    pub object_id: i64,
+    pub aspect_type: WebhookEventDataAspectType,
+    pub updates: WebhookEventDataUpdates,
+    pub owner_id: i32,
+    pub subscription_id: i64,
+    pub event_time: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WebhookEventDataUpdates {
-    authorized: Option<String>,
+    pub authorized: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
