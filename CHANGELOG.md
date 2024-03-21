@@ -1,3 +1,7 @@
+## Unreleased
+
+* Replace Rc configuration with Arc configuration
+
 ## 0.6.4 & 0.6.5
 
 * Fix visibilty attributes of new webhook models

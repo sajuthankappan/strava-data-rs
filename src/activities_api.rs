@@ -1,16 +1,17 @@
+use std::sync::Arc;
+
 use log::debug;
 use reqwest::{Client, StatusCode};
-use std::rc::Rc;
 
 use crate::configuration::Configuration;
 use crate::models::DetailedActivity;
 
 pub struct ActivitiesApi {
-    configuration: Rc<Configuration>,
+    configuration: Arc<Configuration>,
 }
 
 impl ActivitiesApi {
-    pub fn new(configuration: Rc<Configuration>) -> ActivitiesApi {
+    pub fn new(configuration: Arc<Configuration>) -> ActivitiesApi {
         ActivitiesApi { configuration }
     }
 
