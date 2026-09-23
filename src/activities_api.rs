@@ -2,8 +2,10 @@ use std::sync::Arc;
 
 use log::debug;
 use reqwest::{Client, StatusCode};
+use serde::de::DeserializeOwned;
 
 use crate::configuration::Configuration;
+use crate::error::Error;
 use crate::models::DetailedActivity;
 
 pub struct ActivitiesApi {
@@ -23,28 +25,17 @@ impl ActivitiesApi {
         &self,
         id: i64,
         access_token: &str,
-    ) -> Result<Option<DetailedActivity>, Box<dyn std::error::Error + Send + Sync + 'static>> {
+    ) -> Result<Option<DetailedActivity>, Error> {
         debug!("get_activity_by_id {}", id);
         let url = format!("{}/activities/{id}", self.configuration.base_path, id = id);
-        let authorization = format!("Bearer {}", access_token);
-        let res = self
-            .client
-            .get(url.as_str())
-            .header("Authorization", authorization)
-            .send()
-            .await?;
-
-        if res.status() != StatusCode::OK {
-            if res.status() == StatusCode::NOT_FOUND {
+        match self.get(&url, access_token).await {
+            Ok(activity) => Ok(Some(activity)),
+            Err(Error::Status { status: 404, .. }) => {
                 log::warn!("activity {} not found", id);
-                return Ok(None);
+                Ok(None)
             }
-            log::error!("{:?}", res);
-            return Err(From::from("Error code not ok"));
+            Err(e) => Err(e),
         }
-
-        let activity = res.json::<DetailedActivity>().await?;
-        Ok(Some(activity))
     }
 
     pub async fn get_logged_in_athlete_activities(
@@ -54,26 +45,147 @@ impl ActivitiesApi {
         page: i32,
         per_page: i32,
         access_token: &str,
-    ) -> Result<Vec<DetailedActivity>, Box<dyn std::error::Error + Send + Sync + 'static>> {
+    ) -> Result<Vec<DetailedActivity>, Error> {
         debug!("get_logged_in_athlete_activities");
         let url = format!(
             "{}/athlete/activities?before={}&after={}&page={}&per_page={}",
             self.configuration.base_path, before, after, page, per_page
         );
-        let authorization = format!("Bearer {}", access_token);
+        self.get(&url, access_token).await
+    }
+
+    async fn get<T: DeserializeOwned>(&self, url: &str, access_token: &str) -> Result<T, Error> {
         let res = self
             .client
-            .get(url.as_str())
-            .header("Authorization", authorization)
+            .get(url)
+            .header("Authorization", format!("Bearer {}", access_token))
             .send()
             .await?;
 
-        if res.status() != StatusCode::OK {
-            log::error!("{:?}", res);
-            return Err(From::from("Error code not ok"));
+        let status = res.status();
+        if status != StatusCode::OK {
+            let body = res.text().await.unwrap_or_default();
+            return Err(Error::from_status(status, body));
         }
 
-        let activities = res.json::<Vec<DetailedActivity>>().await?;
-        Ok(activities)
+        let bytes = res.bytes().await?;
+        Ok(serde_json::from_slice(&bytes)?)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use wiremock::matchers::{header, method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    fn api_for(server: &MockServer) -> ActivitiesApi {
+        ActivitiesApi::new(Arc::new(Configuration {
+            base_path: server.uri(),
+        }))
+    }
+
+    async fn mock_activity_response(server: &MockServer, response: ResponseTemplate) {
+        Mock::given(method("GET"))
+            .and(path("/activities/1"))
+            .and(header("Authorization", "Bearer token"))
+            .respond_with(response)
+            .mount(server)
+            .await;
+    }
+
+    #[tokio::test]
+    async fn returns_activity() {
+        let server = MockServer::start().await;
+        mock_activity_response(
+            &server,
+            ResponseTemplate::new(200).set_body_string(r#"{"id": 1, "type": "Run"}"#),
+        )
+        .await;
+
+        let activity = api_for(&server)
+            .get_activity_by_id(1, "token")
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(activity.id, Some(1));
+    }
+
+    #[tokio::test]
+    async fn returns_none_when_not_found() {
+        let server = MockServer::start().await;
+        mock_activity_response(&server, ResponseTemplate::new(404)).await;
+
+        let activity = api_for(&server)
+            .get_activity_by_id(1, "token")
+            .await
+            .unwrap();
+        assert!(activity.is_none());
+    }
+
+    #[tokio::test]
+    async fn maps_unauthorized() {
+        let server = MockServer::start().await;
+        mock_activity_response(
+            &server,
+            ResponseTemplate::new(401).set_body_string("expired"),
+        )
+        .await;
+
+        let error = api_for(&server)
+            .get_activity_by_id(1, "token")
+            .await
+            .unwrap_err();
+        assert!(matches!(error, Error::Unauthorized { body } if body == "expired"));
+    }
+
+    #[tokio::test]
+    async fn maps_rate_limited() {
+        let server = MockServer::start().await;
+        mock_activity_response(&server, ResponseTemplate::new(429)).await;
+
+        let error = api_for(&server)
+            .get_activity_by_id(1, "token")
+            .await
+            .unwrap_err();
+        assert!(matches!(error, Error::RateLimited { .. }));
+    }
+
+    #[tokio::test]
+    async fn maps_other_status() {
+        let server = MockServer::start().await;
+        mock_activity_response(&server, ResponseTemplate::new(500).set_body_string("oops")).await;
+
+        let error = api_for(&server)
+            .get_activity_by_id(1, "token")
+            .await
+            .unwrap_err();
+        assert!(matches!(error, Error::Status { status: 500, body } if body == "oops"));
+    }
+
+    #[tokio::test]
+    async fn maps_decode_failure() {
+        let server = MockServer::start().await;
+        mock_activity_response(
+            &server,
+            ResponseTemplate::new(200).set_body_string(r#"{"type": "NotAnActivity"}"#),
+        )
+        .await;
+
+        let error = api_for(&server)
+            .get_activity_by_id(1, "token")
+            .await
+            .unwrap_err();
+        assert!(matches!(error, Error::Decode(_)));
+    }
+
+    #[tokio::test]
+    async fn maps_request_failure() {
+        let api = ActivitiesApi::new(Arc::new(Configuration {
+            base_path: String::from("http://127.0.0.1:1"),
+        }));
+
+        let error = api.get_activity_by_id(1, "token").await.unwrap_err();
+        assert!(matches!(error, Error::Request(_)));
     }
 }

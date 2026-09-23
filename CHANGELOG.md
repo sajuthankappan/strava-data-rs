@@ -1,5 +1,6 @@
 ## Unreleased
 
+* Breaking: Return a typed `Error` from API calls instead of `Box<dyn Error>`, distinguishing unauthorized, rate-limited, other status, request and decode failures
 * Breaking: Remove the `wasm` feature, which had not compiled since 0.6.0
 * Update to Rust 2024 edition, with a minimum supported Rust version of 1.85
 * Reuse a single HTTP client across requests instead of creating one per request
