@@ -64,10 +64,13 @@ pub struct DetailedActivity {
   #[serde(rename = "utc_offset")]
   pub utc_offset: Option<f32>,
   
-  //#[serde(rename = "start_latlng")]
-  //start_latlng: Option<models::LatLng>,
-  //#[serde(rename = "end_latlng")]
-  //end_latlng: Option<models::LatLng>,
+  /// The start coordinates of the activity
+  #[serde(rename = "start_latlng")]
+  pub start_latlng: Option<models::LatLng>,
+  
+  /// The end coordinates of the activity
+  #[serde(rename = "end_latlng")]
+  pub end_latlng: Option<models::LatLng>,
   
   /// The number of achievements gained during this activity
   #[serde(rename = "achievement_count")]
@@ -195,4 +198,42 @@ pub struct DetailedActivity {
   laps: Option<Vec<::models::Lap>>,
   #[serde(rename = "best_efforts")]
   best_efforts: Option<Vec<::models::DetailedSegmentEffort>>*/
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn deserializes_latlng_array() {
+    let activity: DetailedActivity = serde_json::from_str(
+      r#"{"start_latlng": [51.5074, -0.1278], "end_latlng": [48.8566, 2.3522]}"#,
+    ).unwrap();
+    let start = activity.start_latlng.unwrap();
+    assert_eq!(start.latitude(), Some(51.5074));
+    assert_eq!(start.longitude(), Some(-0.1278));
+    let end = activity.end_latlng.unwrap();
+    assert_eq!(end.latitude(), Some(48.8566));
+    assert_eq!(end.longitude(), Some(2.3522));
+  }
+
+  #[test]
+  fn deserializes_empty_latlng_array() {
+    let activity: DetailedActivity = serde_json::from_str(
+      r#"{"start_latlng": [], "end_latlng": []}"#,
+    ).unwrap();
+    let start = activity.start_latlng.unwrap();
+    assert_eq!(start.latitude(), None);
+    assert_eq!(start.longitude(), None);
+    let end = activity.end_latlng.unwrap();
+    assert_eq!(end.latitude(), None);
+    assert_eq!(end.longitude(), None);
+  }
+
+  #[test]
+  fn deserializes_absent_latlng() {
+    let activity: DetailedActivity = serde_json::from_str(r#"{}"#).unwrap();
+    assert!(activity.start_latlng.is_none());
+    assert!(activity.end_latlng.is_none());
+  }
 }

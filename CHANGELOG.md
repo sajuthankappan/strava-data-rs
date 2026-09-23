@@ -1,6 +1,8 @@
 ## Unreleased
 
 * Replace Rc configuration with Arc configuration
+* Add `as_str`, `Display` and `FromStr` to `ActivityType`
+* Make `LatLng` deserialize from `[lat, lng]` arrays and enable `start_latlng` / `end_latlng` on `DetailedActivity`
 
 ## 0.6.4 & 0.6.5
 

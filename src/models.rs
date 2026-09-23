@@ -1,5 +1,5 @@
 mod activity_type;
-pub use activity_type::ActivityType;
+pub use activity_type::{ActivityType, ParseActivityTypeError};
 
 mod detailed_activity;
 pub use detailed_activity::DetailedActivity;
