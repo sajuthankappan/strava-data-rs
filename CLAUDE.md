@@ -11,7 +11,7 @@ Rust client for the Strava API, published to crates.io as `strava-data`.
 ## Build and test
 
 - `cargo test --lib` runs the offline tests: unit tests in `#[cfg(test)]` modules, plus `activities_api` tests against a local `wiremock` server.
-- CI (`.github/workflows/ci.yml`) runs fmt, clippy with `-D warnings`, `cargo test --lib`, and `cargo check` on the MSRV (1.85). Keep the MSRV job in sync with `rust-version`.
+- CI (`.github/workflows/ci.yml`) runs fmt, clippy with `-D warnings`, `cargo test --lib`, and `cargo check` on the MSRV (1.87). Keep the MSRV job in sync with `rust-version`.
 - `tests/integration_tests.rs` calls the live Strava API and needs a `.env` with `ACCESS_TOKEN`, `ACTIVITY_ID`, `BEFORE` and `AFTER`. Without it these tests fail, which is expected.
 
 ## Wire-format stability
