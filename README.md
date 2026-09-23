@@ -1,8 +1,10 @@
-# strava-data &emsp; [![Latest Version]][crates.io] [![Docs]][docs.rs]
+# strava-data &emsp; [![Latest Version]][crates.io] [![Docs]][docs.rs] [![CI Status]][actions]
 [Latest Version]: https://img.shields.io/crates/v/strava-data.svg
 [crates.io]: https://crates.io/crates/strava-data
 [Docs]: https://docs.rs/strava-data/badge.svg
 [docs.rs]: https://docs.rs/strava-data
+[CI Status]: https://github.com/sajuthankappan/strava-data-rs/actions/workflows/ci.yml/badge.svg?branch=master
+[actions]: https://github.com/sajuthankappan/strava-data-rs/actions/workflows/ci.yml
 
 **Strava data API client for Rust**
 
