@@ -26,8 +26,8 @@ async fn test_get_logged_in_athlete_activities() {
     dotenv::dotenv().ok();
     env_logger::init();
 
-    let before = env::var("BEFORE").unwrap().parse().unwrap();
-    let after = env::var("AFTER").unwrap().parse().unwrap();
+    let before = env::var("BEFORE").ok().map(|v| v.parse().unwrap());
+    let after = env::var("AFTER").ok().map(|v| v.parse().unwrap());
     let page = 1;
     let per_page = 100;
     let access_token = env::var("ACCESS_TOKEN").unwrap();

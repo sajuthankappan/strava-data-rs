@@ -37,11 +37,11 @@ if let Some(activity) = activity {
 }
 ```
 
-List the logged-in athlete's activities between two Unix timestamps
+List the logged-in athlete's activities, optionally between two Unix timestamps
 
 ```rust
-let before = 1767225600;
-let after = 1735689600;
+let before = Some(1767225600);
+let after = Some(1735689600);
 let page = 1;
 let per_page = 30;
 let activities = client

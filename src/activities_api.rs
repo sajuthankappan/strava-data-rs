@@ -28,7 +28,7 @@ impl ActivitiesApi {
     ) -> Result<Option<DetailedActivity>, Error> {
         debug!("get_activity_by_id {}", id);
         let url = format!("{}/activities/{id}", self.configuration.base_path, id = id);
-        match self.get(&url, access_token).await {
+        match self.get(&url, &[], access_token).await {
             Ok(activity) => Ok(Some(activity)),
             Err(Error::Status { status: 404, .. }) => {
                 log::warn!("activity {} not found", id);
@@ -38,26 +38,38 @@ impl ActivitiesApi {
         }
     }
 
+    /// List the logged-in athlete's activities, optionally limited to those started
+    /// before and/or after the given Unix timestamps (in seconds)
     pub async fn get_logged_in_athlete_activities(
         &self,
-        before: i32,
-        after: i32,
+        before: Option<i64>,
+        after: Option<i64>,
         page: i32,
         per_page: i32,
         access_token: &str,
     ) -> Result<Vec<DetailedActivity>, Error> {
         debug!("get_logged_in_athlete_activities");
-        let url = format!(
-            "{}/athlete/activities?before={}&after={}&page={}&per_page={}",
-            self.configuration.base_path, before, after, page, per_page
-        );
-        self.get(&url, access_token).await
+        let url = format!("{}/athlete/activities", self.configuration.base_path);
+        let mut query = vec![("page", i64::from(page)), ("per_page", i64::from(per_page))];
+        if let Some(before) = before {
+            query.push(("before", before));
+        }
+        if let Some(after) = after {
+            query.push(("after", after));
+        }
+        self.get(&url, &query, access_token).await
     }
 
-    async fn get<T: DeserializeOwned>(&self, url: &str, access_token: &str) -> Result<T, Error> {
+    async fn get<T: DeserializeOwned>(
+        &self,
+        url: &str,
+        query: &[(&str, i64)],
+        access_token: &str,
+    ) -> Result<T, Error> {
         let res = self
             .client
             .get(url)
+            .query(query)
             .header("Authorization", format!("Bearer {}", access_token))
             .send()
             .await?;
@@ -76,7 +88,7 @@ impl ActivitiesApi {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wiremock::matchers::{header, method, path};
+    use wiremock::matchers::{header, method, path, query_param, query_param_is_missing};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     fn api_for(server: &MockServer) -> ActivitiesApi {
@@ -177,6 +189,46 @@ mod tests {
             .await
             .unwrap_err();
         assert!(matches!(error, Error::Decode(_)));
+    }
+
+    #[tokio::test]
+    async fn sends_before_and_after_when_present() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/athlete/activities"))
+            .and(query_param("before", "1767225600"))
+            .and(query_param("after", "1735689600"))
+            .and(query_param("page", "2"))
+            .and(query_param("per_page", "30"))
+            .respond_with(ResponseTemplate::new(200).set_body_string(r#"[{"id": 1}]"#))
+            .mount(&server)
+            .await;
+
+        let activities = api_for(&server)
+            .get_logged_in_athlete_activities(Some(1767225600), Some(1735689600), 2, 30, "token")
+            .await
+            .unwrap();
+        assert_eq!(activities.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn omits_before_and_after_when_absent() {
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/athlete/activities"))
+            .and(query_param_is_missing("before"))
+            .and(query_param_is_missing("after"))
+            .and(query_param("page", "1"))
+            .and(query_param("per_page", "30"))
+            .respond_with(ResponseTemplate::new(200).set_body_string("[]"))
+            .mount(&server)
+            .await;
+
+        let activities = api_for(&server)
+            .get_logged_in_athlete_activities(None, None, 1, 30, "token")
+            .await
+            .unwrap();
+        assert!(activities.is_empty());
     }
 
     #[tokio::test]

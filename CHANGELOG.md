@@ -1,5 +1,6 @@
-## Unreleased
+## 0.8.0
 
+* Breaking: `before` and `after` in `get_logged_in_athlete_activities` are now `Option<i64>`, and are omitted from the request when `None`
 * Breaking: Return a typed `Error` from API calls instead of `Box<dyn Error>`, distinguishing unauthorized, rate-limited, other status, request and decode failures
 * Breaking: Remove the `wasm` feature, which had not compiled since 0.6.0
 * Update to Rust 2024 edition, with a minimum supported Rust version of 1.87
