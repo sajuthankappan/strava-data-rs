@@ -28,6 +28,7 @@ jobs:
           components: clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo clippy --all-targets --no-default-features --features rustls -- -D warnings
 
   # Offline tests only; tests/integration_tests.rs calls the real Strava API
   test:
@@ -45,3 +46,4 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.87.0
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --lib
+      - run: cargo check --lib --no-default-features --features rustls

@@ -48,6 +48,10 @@ pub struct DetailedActivity {
     #[serde(rename = "type")]
     pub activity_type: Option<models::ActivityType>,
 
+    /// The activity's sport type
+    #[serde(rename = "sport_type")]
+    pub sport_type: Option<models::SportType>,
+
     /// The time at which the activity was started.
     #[serde(rename = "start_date")]
     pub start_date: Option<String>,
@@ -225,6 +229,26 @@ mod tests {
         let end = activity.end_latlng.unwrap();
         assert_eq!(end.latitude(), None);
         assert_eq!(end.longitude(), None);
+    }
+
+    #[test]
+    fn deserializes_sport_type() {
+        let activity: DetailedActivity =
+            serde_json::from_str(r#"{"type": "Ride", "sport_type": "MountainBikeRide"}"#).unwrap();
+        assert_eq!(
+            activity.sport_type,
+            Some(models::SportType::MountainBikeRide)
+        );
+    }
+
+    #[test]
+    fn deserializes_unknown_sport_type() {
+        let activity: DetailedActivity =
+            serde_json::from_str(r#"{"type": "Workout", "sport_type": "Hurling"}"#).unwrap();
+        assert_eq!(
+            activity.sport_type,
+            Some(models::SportType::Other(String::from("Hurling")))
+        );
     }
 
     #[test]

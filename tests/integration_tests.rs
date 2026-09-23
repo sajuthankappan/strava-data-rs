@@ -5,8 +5,8 @@ use strava_data::{ApiClient, Configuration};
 
 #[tokio::test]
 async fn test_get_activity_by_id() {
-    dotenv::dotenv().ok();
-    env_logger::init();
+    dotenvy::dotenv().ok();
+    let _ = env_logger::try_init();
 
     let activity_id = env::var("ACTIVITY_ID").unwrap().parse().unwrap();
     let access_token = env::var("ACCESS_TOKEN").unwrap();
@@ -23,8 +23,8 @@ async fn test_get_activity_by_id() {
 
 #[tokio::test]
 async fn test_get_logged_in_athlete_activities() {
-    dotenv::dotenv().ok();
-    env_logger::init();
+    dotenvy::dotenv().ok();
+    let _ = env_logger::try_init();
 
     let before = env::var("BEFORE").ok().map(|v| v.parse().unwrap());
     let after = env::var("AFTER").ok().map(|v| v.parse().unwrap());

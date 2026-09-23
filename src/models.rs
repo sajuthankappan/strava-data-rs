@@ -1,6 +1,9 @@
 mod activity_type;
 pub use activity_type::{ActivityType, ParseActivityTypeError};
 
+mod sport_type;
+pub use sport_type::SportType;
+
 mod detailed_activity;
 pub use detailed_activity::DetailedActivity;
 

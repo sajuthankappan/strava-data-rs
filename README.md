@@ -14,6 +14,16 @@
 - List the logged-in athlete's activities
 - Models to help processing incoming webhooks
 
+## TLS
+
+By default, HTTPS uses the platform's native TLS (OpenSSL on Linux). To use rustls instead:
+
+```toml
+strava-data = { version = "0.8", default-features = false, features = ["rustls"] }
+```
+
+## Access tokens
+
 This crate needs an OAuth access token for the athlete. To obtain and refresh tokens, see [`strava-auth`](https://crates.io/crates/strava-auth).
 
 ## Usage example

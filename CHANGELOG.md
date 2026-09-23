@@ -1,3 +1,11 @@
+## 0.8.1
+
+* Add `sport_type` to `DetailedActivity`, as a new `SportType` enum. Sport types unknown to this crate are kept as `SportType::Other` with the exact value Strava sent
+* Add a `rustls` feature to use rustls instead of native TLS
+* Upgrade reqwest from 0.11 to 0.13 (native TLS remains the default)
+* Replace unmaintained `dotenv` dev-dependency with `dotenvy`
+* Fix integration tests panicking when initializing the logger more than once
+
 ## 0.8.0
 
 * Breaking: `before` and `after` in `get_logged_in_athlete_activities` are now `Option<i64>`, and are omitted from the request when `None`
