@@ -8,22 +8,27 @@ use crate::models::DetailedActivity;
 
 pub struct ActivitiesApi {
     configuration: Arc<Configuration>,
+    client: Client,
 }
 
 impl ActivitiesApi {
     pub fn new(configuration: Arc<Configuration>) -> ActivitiesApi {
-        ActivitiesApi { configuration }
+        ActivitiesApi {
+            configuration,
+            client: Client::new(),
+        }
     }
 
     pub async fn get_activity_by_id(
         &self,
         id: i64,
-        access_token: &String,
+        access_token: &str,
     ) -> Result<Option<DetailedActivity>, Box<dyn std::error::Error + Send + Sync + 'static>> {
         debug!("get_activity_by_id {}", id);
         let url = format!("{}/activities/{id}", self.configuration.base_path, id = id);
         let authorization = format!("Bearer {}", access_token);
-        let res = Client::new()
+        let res = self
+            .client
             .get(url.as_str())
             .header("Authorization", authorization)
             .send()
@@ -48,7 +53,7 @@ impl ActivitiesApi {
         after: i32,
         page: i32,
         per_page: i32,
-        access_token: &String,
+        access_token: &str,
     ) -> Result<Vec<DetailedActivity>, Box<dyn std::error::Error + Send + Sync + 'static>> {
         debug!("get_logged_in_athlete_activities");
         let url = format!(
@@ -56,7 +61,8 @@ impl ActivitiesApi {
             self.configuration.base_path, before, after, page, per_page
         );
         let authorization = format!("Bearer {}", access_token);
-        let res = Client::new()
+        let res = self
+            .client
             .get(url.as_str())
             .header("Authorization", authorization)
             .send()

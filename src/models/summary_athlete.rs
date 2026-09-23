@@ -2,10 +2,6 @@ use super::{SummaryClub, SummaryGear};
 use serde::{Deserialize, Serialize};
 use std::vec::Vec;
 
-#[cfg(feature = "wasm")]
-use wasm_bindgen::prelude::wasm_bindgen;
-
-#[cfg_attr(feature = "wasm", wasm_bindgen)]
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct SummaryAthlete {
     /// The unique identifier of the athlete

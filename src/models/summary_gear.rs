@@ -1,9 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "wasm")]
-use wasm_bindgen::prelude::wasm_bindgen;
-
-#[cfg_attr(feature = "wasm", wasm_bindgen)]
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct SummaryGear {
   /// The gear's unique identifier.

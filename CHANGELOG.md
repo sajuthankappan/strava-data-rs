@@ -1,5 +1,9 @@
 ## Unreleased
 
+* Breaking: Remove the `wasm` feature, which had not compiled since 0.6.0
+* Update to Rust 2024 edition, with a minimum supported Rust version of 1.85
+* Reuse a single HTTP client across requests instead of creating one per request
+* Take `access_token` as `&str` instead of `&String`
 * Replace Rc configuration with Arc configuration
 * Add `as_str`, `Display` and `FromStr` to `ActivityType`
 * Make `LatLng` deserialize from `[lat, lng]` arrays and enable `start_latlng` / `end_latlng` on `DetailedActivity`
