@@ -6,7 +6,7 @@ use serde::de::DeserializeOwned;
 
 use crate::configuration::Configuration;
 use crate::error::Error;
-use crate::models::DetailedActivity;
+use crate::models::{DetailedActivity, SummaryActivity};
 
 pub struct ActivitiesApi {
     configuration: Arc<Configuration>,
@@ -47,7 +47,7 @@ impl ActivitiesApi {
         page: i32,
         per_page: i32,
         access_token: &str,
-    ) -> Result<Vec<DetailedActivity>, Error> {
+    ) -> Result<Vec<SummaryActivity>, Error> {
         debug!("get_logged_in_athlete_activities");
         let url = format!("{}/athlete/activities", self.configuration.base_path);
         let mut query = vec![("page", i64::from(page)), ("per_page", i64::from(per_page))];

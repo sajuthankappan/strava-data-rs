@@ -7,6 +7,9 @@ pub use sport_type::SportType;
 mod detailed_activity;
 pub use detailed_activity::DetailedActivity;
 
+mod summary_activity;
+pub use summary_activity::SummaryActivity;
+
 mod detailed_athlete;
 pub use detailed_athlete::DetailedAthlete;
 

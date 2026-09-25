@@ -1,3 +1,8 @@
+## Unreleased
+
+* Breaking: `get_logged_in_athlete_activities` now returns `Vec<SummaryActivity>` instead of `Vec<DetailedActivity>`, matching what Strava returns from `/athlete/activities`. `SummaryActivity` drops `description`, `calories`, `device_name` and `embed_token`, which were always `None` there, and adds `hide_from_home`
+* Make `weighted_average_watts` public on `DetailedActivity`
+
 ## 0.8.1
 
 * Add `sport_type` to `DetailedActivity`, as a new `SportType` enum. Sport types unknown to this crate are kept as `SportType::Other` with the exact value Strava sent

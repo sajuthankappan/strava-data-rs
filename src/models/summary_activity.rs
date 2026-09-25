@@ -2,7 +2,7 @@ use super::super::models;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct DetailedActivity {
+pub struct SummaryActivity {
     /// The unique identifier of the activity
     #[serde(rename = "id")]
     pub id: Option<i64>,
@@ -143,6 +143,10 @@ pub struct DetailedActivity {
     #[serde(rename = "has_kudoed")]
     pub has_kudoed: Option<bool>,
 
+    /// Whether the activity is muted
+    #[serde(rename = "hide_from_home")]
+    pub hide_from_home: Option<bool>,
+
     /// The id of the gear for the activity
     #[serde(rename = "gear_id")]
     pub gear_id: Option<String>,
@@ -166,39 +170,6 @@ pub struct DetailedActivity {
     /// Similar to Normalized Power. Rides with power meter data only
     #[serde(rename = "weighted_average_watts")]
     pub weighted_average_watts: Option<i32>,
-
-    /// The description of the activity
-    #[serde(rename = "description")]
-    pub description: Option<String>,
-
-    /*#[serde(rename = "photos")] //TODO
-    photos: Option<models::PhotosSummary>,
-    #[serde(rename = "gear")]
-    gear: Option<models::SummaryGear>,*/
-    /// The number of kilocalories consumed during this activity
-    #[serde(rename = "calories")]
-    pub calories: Option<f32>,
-
-    //#[serde(rename = "segment_efforts")]  //TODO: Do we need this?
-    //segment_efforts: Option<Vec<::models::DetailedSegmentEffort>>,
-    /// The name of the device used to record the activity
-    #[serde(rename = "device_name")]
-    pub device_name: Option<String>,
-
-    /// The token used to embed a Strava activity
-    #[serde(rename = "embed_token")]
-    pub embed_token: Option<String>,
-    //TODO: Complete these
-    /*/// The splits of this activity in metric units (for runs)
-    #[serde(rename = "splits_metric")]
-    splits_metric: Option<Vec<::models::Split>>,
-    /// The splits of this activity in imperial units (for runs)
-    #[serde(rename = "splits_standard")]
-    splits_standard: Option<Vec<::models::Split>>,
-    #[serde(rename = "laps")]
-    laps: Option<Vec<::models::Lap>>,
-    #[serde(rename = "best_efforts")]
-    best_efforts: Option<Vec<::models::DetailedSegmentEffort>>*/
 }
 
 #[cfg(test)]
@@ -206,55 +177,26 @@ mod tests {
     use super::*;
 
     #[test]
-    fn deserializes_latlng_array() {
-        let activity: DetailedActivity = serde_json::from_str(
-            r#"{"start_latlng": [51.5074, -0.1278], "end_latlng": [48.8566, 2.3522]}"#,
+    fn deserializes_list_item() {
+        let activity: SummaryActivity = serde_json::from_str(
+            r#"{
+                "id": 1,
+                "type": "Ride",
+                "sport_type": "GravelRide",
+                "hide_from_home": true,
+                "weighted_average_watts": 210,
+                "start_latlng": [51.5074, -0.1278],
+                "map": {"id": "a1", "summary_polyline": "abc", "polyline": null}
+            }"#,
         )
         .unwrap();
-        let start = activity.start_latlng.unwrap();
-        assert_eq!(start.latitude(), Some(51.5074));
-        assert_eq!(start.longitude(), Some(-0.1278));
-        let end = activity.end_latlng.unwrap();
-        assert_eq!(end.latitude(), Some(48.8566));
-        assert_eq!(end.longitude(), Some(2.3522));
-    }
-
-    #[test]
-    fn deserializes_empty_latlng_array() {
-        let activity: DetailedActivity =
-            serde_json::from_str(r#"{"start_latlng": [], "end_latlng": []}"#).unwrap();
-        let start = activity.start_latlng.unwrap();
-        assert_eq!(start.latitude(), None);
-        assert_eq!(start.longitude(), None);
-        let end = activity.end_latlng.unwrap();
-        assert_eq!(end.latitude(), None);
-        assert_eq!(end.longitude(), None);
-    }
-
-    #[test]
-    fn deserializes_sport_type() {
-        let activity: DetailedActivity =
-            serde_json::from_str(r#"{"type": "Ride", "sport_type": "MountainBikeRide"}"#).unwrap();
-        assert_eq!(
-            activity.sport_type,
-            Some(models::SportType::MountainBikeRide)
-        );
-    }
-
-    #[test]
-    fn deserializes_unknown_sport_type() {
-        let activity: DetailedActivity =
-            serde_json::from_str(r#"{"type": "Workout", "sport_type": "Hurling"}"#).unwrap();
-        assert_eq!(
-            activity.sport_type,
-            Some(models::SportType::Other(String::from("Hurling")))
-        );
-    }
-
-    #[test]
-    fn deserializes_absent_latlng() {
-        let activity: DetailedActivity = serde_json::from_str(r#"{}"#).unwrap();
-        assert!(activity.start_latlng.is_none());
-        assert!(activity.end_latlng.is_none());
+        assert_eq!(activity.id, Some(1));
+        assert_eq!(activity.sport_type, Some(models::SportType::GravelRide));
+        assert_eq!(activity.hide_from_home, Some(true));
+        assert_eq!(activity.weighted_average_watts, Some(210));
+        assert_eq!(activity.start_latlng.unwrap().latitude(), Some(51.5074));
+        let map = activity.map.unwrap();
+        assert_eq!(map.summary_polyline.as_deref(), Some("abc"));
+        assert!(map.polyline.is_none());
     }
 }

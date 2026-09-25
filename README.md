@@ -47,7 +47,7 @@ if let Some(activity) = activity {
 }
 ```
 
-List the logged-in athlete's activities, optionally between two Unix timestamps
+List the logged-in athlete's activities, optionally between two Unix timestamps. These are returned as `SummaryActivity`, so use `get_activity_by_id` for fields such as `description` and `calories`
 
 ```rust
 let before = Some(1767225600);
