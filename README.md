@@ -19,7 +19,7 @@
 By default, HTTPS uses the platform's native TLS (OpenSSL on Linux). To use rustls instead:
 
 ```toml
-strava-data = { version = "0.8", default-features = false, features = ["rustls"] }
+strava-data = { version = "0.9", default-features = false, features = ["rustls"] }
 ```
 
 ## Access tokens
