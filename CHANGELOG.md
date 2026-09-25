@@ -1,6 +1,7 @@
 ## Unreleased
 
-* Add `From<DetailedActivity>` for `SummaryActivity`, keeping the shared fields and dropping `description`, `calories` and `embed_token`
+* Add `photos`, `gear`, `segment_efforts`, `splits_metric`, `splits_standard`, `laps` and `best_efforts` to `DetailedActivity`, with new `PhotosSummary`, `PhotosSummaryPrimary`, `Split`, `Lap`, `MetaActivity`, `DetailedSegmentEffort`, `SummarySegmentEffort`, `SummaryPrSegmentEffort` and `SummarySegment` models. These fields add to `DetailedActivity`'s serialized output, and segment efforts can make it much larger
+* Add `From<DetailedActivity>` for `SummaryActivity`, keeping the shared fields and dropping the detail-only ones
 * Add `hide_from_home` to `DetailedActivity`, which Strava's spec includes on detailed activities too
 * Add `device_name` back to `SummaryActivity`. Strava's spec includes it on summary activities, so the 0.9.0 note that it was always `None` from `/athlete/activities` was wrong
 

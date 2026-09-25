@@ -229,6 +229,13 @@ impl From<models::DetailedActivity> for SummaryActivity {
             description: _,
             calories: _,
             embed_token: _,
+            photos: _,
+            gear: _,
+            segment_efforts: _,
+            splits_metric: _,
+            splits_standard: _,
+            laps: _,
+            best_efforts: _,
         } = activity;
         SummaryActivity {
             id,

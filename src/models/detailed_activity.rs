@@ -175,16 +175,22 @@ pub struct DetailedActivity {
     #[serde(rename = "description")]
     pub description: Option<String>,
 
-    /*#[serde(rename = "photos")] //TODO
-    photos: Option<models::PhotosSummary>,
+    /// A summary of the activity's photos
+    #[serde(rename = "photos")]
+    pub photos: Option<models::PhotosSummary>,
+
+    /// The gear used for the activity
     #[serde(rename = "gear")]
-    gear: Option<models::SummaryGear>,*/
+    pub gear: Option<models::SummaryGear>,
+
     /// The number of kilocalories consumed during this activity
     #[serde(rename = "calories")]
     pub calories: Option<f32>,
 
-    //#[serde(rename = "segment_efforts")]  //TODO: Do we need this?
-    //segment_efforts: Option<Vec<::models::DetailedSegmentEffort>>,
+    /// The activity's efforts on segments
+    #[serde(rename = "segment_efforts")]
+    pub segment_efforts: Option<Vec<models::DetailedSegmentEffort>>,
+
     /// The name of the device used to record the activity
     #[serde(rename = "device_name")]
     pub device_name: Option<String>,
@@ -192,17 +198,22 @@ pub struct DetailedActivity {
     /// The token used to embed a Strava activity
     #[serde(rename = "embed_token")]
     pub embed_token: Option<String>,
-    //TODO: Complete these
-    /*/// The splits of this activity in metric units (for runs)
+
+    /// The splits of this activity in metric units (for runs)
     #[serde(rename = "splits_metric")]
-    splits_metric: Option<Vec<::models::Split>>,
+    pub splits_metric: Option<Vec<models::Split>>,
+
     /// The splits of this activity in imperial units (for runs)
     #[serde(rename = "splits_standard")]
-    splits_standard: Option<Vec<::models::Split>>,
+    pub splits_standard: Option<Vec<models::Split>>,
+
+    /// The laps of this activity
     #[serde(rename = "laps")]
-    laps: Option<Vec<::models::Lap>>,
+    pub laps: Option<Vec<models::Lap>>,
+
+    /// The athlete's best efforts during this activity, such as their fastest 5k (for runs)
     #[serde(rename = "best_efforts")]
-    best_efforts: Option<Vec<::models::DetailedSegmentEffort>>*/
+    pub best_efforts: Option<Vec<models::DetailedSegmentEffort>>,
 }
 
 #[cfg(test)]
@@ -233,6 +244,38 @@ mod tests {
         let end = activity.end_latlng.unwrap();
         assert_eq!(end.latitude(), None);
         assert_eq!(end.longitude(), None);
+    }
+
+    #[test]
+    fn deserializes_nested_details() {
+        let activity: DetailedActivity = serde_json::from_str(
+            r#"{
+                "photos": {"count": 1, "primary": {"unique_id": "a1b2c3", "urls": {"600": "https://example.com/600.jpg"}}},
+                "gear": {"id": "b123", "name": "Road bike", "distance": 12000.5},
+                "segment_efforts": [{"id": 1, "name": "Hawk Hill", "segment": {"id": 229781, "activity_type": "Ride"}}],
+                "splits_metric": [{"split": 1, "distance": 1000.5}, {"split": 2, "distance": 1000.25}],
+                "splits_standard": [{"split": 1, "distance": 1609.5}],
+                "laps": [{"lap_index": 1, "activity": {"id": 7}, "athlete": {"id": 8}}],
+                "best_efforts": [{"name": "5k", "elapsed_time": 1500}]
+            }"#,
+        )
+        .unwrap();
+
+        let primary = activity.photos.unwrap().primary.unwrap();
+        assert_eq!(
+            primary.urls.unwrap().get("600").map(String::as_str),
+            Some("https://example.com/600.jpg")
+        );
+        assert_eq!(activity.gear.unwrap().name.as_deref(), Some("Road bike"));
+        let segment_efforts = activity.segment_efforts.unwrap();
+        let segment = segment_efforts[0].segment.as_ref().unwrap();
+        assert_eq!(segment.activity_type.as_deref(), Some("Ride"));
+        assert_eq!(activity.splits_metric.unwrap().len(), 2);
+        assert_eq!(activity.splits_standard.unwrap()[0].distance, Some(1609.5));
+        let laps = activity.laps.unwrap();
+        assert_eq!(laps[0].activity.as_ref().unwrap().id, Some(7));
+        let best_efforts = activity.best_efforts.unwrap();
+        assert_eq!(best_efforts[0].name.as_deref(), Some("5k"));
     }
 
     #[test]

@@ -10,6 +10,33 @@ pub use detailed_activity::DetailedActivity;
 mod summary_activity;
 pub use summary_activity::SummaryActivity;
 
+mod meta_activity;
+pub use meta_activity::MetaActivity;
+
+mod photos_summary;
+pub use photos_summary::PhotosSummary;
+
+mod photos_summary_primary;
+pub use photos_summary_primary::PhotosSummaryPrimary;
+
+mod split;
+pub use split::Split;
+
+mod lap;
+pub use lap::Lap;
+
+mod detailed_segment_effort;
+pub use detailed_segment_effort::DetailedSegmentEffort;
+
+mod summary_segment_effort;
+pub use summary_segment_effort::SummarySegmentEffort;
+
+mod summary_pr_segment_effort;
+pub use summary_pr_segment_effort::SummaryPrSegmentEffort;
+
+mod summary_segment;
+pub use summary_segment::SummarySegment;
+
 mod detailed_athlete;
 pub use detailed_athlete::DetailedAthlete;
 
@@ -32,3 +59,14 @@ mod polyline_map;
 pub use polyline_map::PolylineMap;
 
 pub mod webhooks;
+
+/// Assert that `json`, which should set every field, deserializes into `T` and serializes back unchanged
+#[cfg(test)]
+pub(crate) fn assert_round_trips<T>(json: &str)
+where
+    T: serde::de::DeserializeOwned + serde::Serialize,
+{
+    let expected: serde_json::Value = serde_json::from_str(json).unwrap();
+    let model: T = serde_json::from_str(json).unwrap();
+    assert_eq!(serde_json::to_value(model).unwrap(), expected);
+}
