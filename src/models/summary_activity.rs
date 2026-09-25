@@ -103,6 +103,10 @@ pub struct SummaryActivity {
     #[serde(rename = "map")]
     pub map: Option<models::PolylineMap>,
 
+    /// The name of the device used to record the activity
+    #[serde(rename = "device_name")]
+    pub device_name: Option<String>,
+
     /// Whether this activity was recorded on a training machine
     #[serde(rename = "trainer")]
     pub trainer: Option<bool>,
@@ -184,6 +188,7 @@ mod tests {
                 "type": "Ride",
                 "sport_type": "GravelRide",
                 "hide_from_home": true,
+                "device_name": "Garmin Forerunner 965",
                 "weighted_average_watts": 210,
                 "start_latlng": [51.5074, -0.1278],
                 "map": {"id": "a1", "summary_polyline": "abc", "polyline": null}
@@ -193,6 +198,10 @@ mod tests {
         assert_eq!(activity.id, Some(1));
         assert_eq!(activity.sport_type, Some(models::SportType::GravelRide));
         assert_eq!(activity.hide_from_home, Some(true));
+        assert_eq!(
+            activity.device_name.as_deref(),
+            Some("Garmin Forerunner 965")
+        );
         assert_eq!(activity.weighted_average_watts, Some(210));
         assert_eq!(activity.start_latlng.unwrap().latitude(), Some(51.5074));
         let map = activity.map.unwrap();

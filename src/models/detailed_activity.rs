@@ -143,6 +143,10 @@ pub struct DetailedActivity {
     #[serde(rename = "has_kudoed")]
     pub has_kudoed: Option<bool>,
 
+    /// Whether the activity is muted
+    #[serde(rename = "hide_from_home")]
+    pub hide_from_home: Option<bool>,
+
     /// The id of the gear for the activity
     #[serde(rename = "gear_id")]
     pub gear_id: Option<String>,
@@ -229,6 +233,13 @@ mod tests {
         let end = activity.end_latlng.unwrap();
         assert_eq!(end.latitude(), None);
         assert_eq!(end.longitude(), None);
+    }
+
+    #[test]
+    fn deserializes_hide_from_home() {
+        let activity: DetailedActivity =
+            serde_json::from_str(r#"{"hide_from_home": true}"#).unwrap();
+        assert_eq!(activity.hide_from_home, Some(true));
     }
 
     #[test]
