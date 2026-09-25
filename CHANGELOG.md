@@ -1,4 +1,4 @@
-## Unreleased
+## 0.9.1
 
 * Add `photos`, `gear`, `segment_efforts`, `splits_metric`, `splits_standard`, `laps` and `best_efforts` to `DetailedActivity`, with new `PhotosSummary`, `PhotosSummaryPrimary`, `Split`, `Lap`, `MetaActivity`, `DetailedSegmentEffort`, `SummarySegmentEffort`, `SummaryPrSegmentEffort` and `SummarySegment` models. These fields add to `DetailedActivity`'s serialized output, and segment efforts can make it much larger
 * Add `From<DetailedActivity>` for `SummaryActivity`, keeping the shared fields and dropping the detail-only ones
