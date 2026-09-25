@@ -1,5 +1,7 @@
 use reqwest::StatusCode;
 
+use crate::rate_limit::RateLimit;
+
 type BoxError = Box<dyn std::error::Error + Send + Sync + 'static>;
 
 /// The error returned by API calls
@@ -12,7 +14,11 @@ pub enum Error {
 
     /// The Strava rate limit has been exceeded (HTTP 429)
     #[error("rate limit exceeded: {body}")]
-    RateLimited { body: String },
+    RateLimited {
+        body: String,
+        /// The rate limit reported by Strava, or `None` if no rate limit headers were sent
+        rate_limit: Option<RateLimit>,
+    },
 
     /// Any other non-success response
     #[error("unexpected status {status}: {body}")]
@@ -28,10 +34,14 @@ pub enum Error {
 }
 
 impl Error {
-    pub(crate) fn from_status(status: StatusCode, body: String) -> Error {
+    pub(crate) fn from_status(
+        status: StatusCode,
+        body: String,
+        rate_limit: Option<RateLimit>,
+    ) -> Error {
         match status {
             StatusCode::UNAUTHORIZED => Error::Unauthorized { body },
-            StatusCode::TOO_MANY_REQUESTS => Error::RateLimited { body },
+            StatusCode::TOO_MANY_REQUESTS => Error::RateLimited { body, rate_limit },
             _ => Error::Status {
                 status: status.as_u16(),
                 body,

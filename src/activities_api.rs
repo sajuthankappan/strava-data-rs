@@ -1,12 +1,13 @@
 use std::sync::Arc;
 
 use log::debug;
-use reqwest::{Client, StatusCode};
+use reqwest::{Client, Response, StatusCode};
 use serde::de::DeserializeOwned;
 
 use crate::configuration::Configuration;
 use crate::error::Error;
 use crate::models::{DetailedActivity, SummaryActivity};
+use crate::rate_limit::{ApiResponse, RateLimit};
 
 pub struct ActivitiesApi {
     configuration: Arc<Configuration>,
@@ -21,21 +22,27 @@ impl ActivitiesApi {
         }
     }
 
+    /// Get an activity, or `None` if it does not exist
     pub async fn get_activity_by_id(
         &self,
         id: i64,
         access_token: &str,
-    ) -> Result<Option<DetailedActivity>, Error> {
+    ) -> Result<ApiResponse<Option<DetailedActivity>>, Error> {
         debug!("get_activity_by_id {}", id);
         let url = format!("{}/activities/{id}", self.configuration.base_path, id = id);
-        match self.get(&url, &[], access_token).await {
-            Ok(activity) => Ok(Some(activity)),
-            Err(Error::Status { status: 404, .. }) => {
-                log::warn!("activity {} not found", id);
-                Ok(None)
-            }
-            Err(e) => Err(e),
+        let (res, rate_limit) = self.send(&url, &[], access_token).await?;
+        if res.status() == StatusCode::NOT_FOUND {
+            log::warn!("activity {} not found", id);
+            return Ok(ApiResponse {
+                data: None,
+                rate_limit,
+            });
         }
+        let activity = Self::decode(res, rate_limit).await?;
+        Ok(ApiResponse {
+            data: Some(activity),
+            rate_limit,
+        })
     }
 
     /// List the logged-in athlete's activities, optionally limited to those started
@@ -47,7 +54,7 @@ impl ActivitiesApi {
         page: i32,
         per_page: i32,
         access_token: &str,
-    ) -> Result<Vec<SummaryActivity>, Error> {
+    ) -> Result<ApiResponse<Vec<SummaryActivity>>, Error> {
         debug!("get_logged_in_athlete_activities");
         let url = format!("{}/athlete/activities", self.configuration.base_path);
         let mut query = vec![("page", i64::from(page)), ("per_page", i64::from(per_page))];
@@ -57,15 +64,20 @@ impl ActivitiesApi {
         if let Some(after) = after {
             query.push(("after", after));
         }
-        self.get(&url, &query, access_token).await
+        let (res, rate_limit) = self.send(&url, &query, access_token).await?;
+        let activities = Self::decode(res, rate_limit).await?;
+        Ok(ApiResponse {
+            data: activities,
+            rate_limit,
+        })
     }
 
-    async fn get<T: DeserializeOwned>(
+    async fn send(
         &self,
         url: &str,
         query: &[(&str, i64)],
         access_token: &str,
-    ) -> Result<T, Error> {
+    ) -> Result<(Response, Option<RateLimit>), Error> {
         let res = self
             .client
             .get(url)
@@ -73,11 +85,18 @@ impl ActivitiesApi {
             .header("Authorization", format!("Bearer {}", access_token))
             .send()
             .await?;
+        let rate_limit = RateLimit::from_headers(res.headers());
+        Ok((res, rate_limit))
+    }
 
+    async fn decode<T: DeserializeOwned>(
+        res: Response,
+        rate_limit: Option<RateLimit>,
+    ) -> Result<T, Error> {
         let status = res.status();
         if status != StatusCode::OK {
             let body = res.text().await.unwrap_or_default();
-            return Err(Error::from_status(status, body));
+            return Err(Error::from_status(status, body, rate_limit));
         }
 
         let bytes = res.bytes().await?;
@@ -88,6 +107,7 @@ impl ActivitiesApi {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::rate_limit::RateLimitWindow;
     use wiremock::matchers::{header, method, path, query_param, query_param_is_missing};
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -95,6 +115,31 @@ mod tests {
         ActivitiesApi::new(Arc::new(Configuration {
             base_path: server.uri(),
         }))
+    }
+
+    fn with_rate_limit_headers(response: ResponseTemplate) -> ResponseTemplate {
+        response
+            .insert_header("X-RateLimit-Limit", "200,2000")
+            .insert_header("X-RateLimit-Usage", "20,300")
+            .insert_header("X-ReadRateLimit-Limit", "100,1000")
+            .insert_header("X-ReadRateLimit-Usage", "10,150")
+    }
+
+    fn expected_rate_limit() -> RateLimit {
+        RateLimit {
+            overall: Some(RateLimitWindow {
+                short_term_limit: 200,
+                daily_limit: 2000,
+                short_term_usage: 20,
+                daily_usage: 300,
+            }),
+            read: Some(RateLimitWindow {
+                short_term_limit: 100,
+                daily_limit: 1000,
+                short_term_usage: 10,
+                daily_usage: 150,
+            }),
+        }
     }
 
     async fn mock_activity_response(server: &MockServer, response: ResponseTemplate) {
@@ -119,8 +164,54 @@ mod tests {
             .get_activity_by_id(1, "token")
             .await
             .unwrap()
+            .data
             .unwrap();
         assert_eq!(activity.id, Some(1));
+    }
+
+    #[tokio::test]
+    async fn returns_rate_limit_with_activity() {
+        let server = MockServer::start().await;
+        mock_activity_response(
+            &server,
+            with_rate_limit_headers(ResponseTemplate::new(200).set_body_string(r#"{"id": 1}"#)),
+        )
+        .await;
+
+        let response = api_for(&server)
+            .get_activity_by_id(1, "token")
+            .await
+            .unwrap();
+        assert_eq!(response.rate_limit, Some(expected_rate_limit()));
+    }
+
+    #[tokio::test]
+    async fn returns_no_rate_limit_without_headers() {
+        let server = MockServer::start().await;
+        mock_activity_response(
+            &server,
+            ResponseTemplate::new(200).set_body_string(r#"{"id": 1}"#),
+        )
+        .await;
+
+        let response = api_for(&server)
+            .get_activity_by_id(1, "token")
+            .await
+            .unwrap();
+        assert!(response.rate_limit.is_none());
+    }
+
+    #[tokio::test]
+    async fn returns_rate_limit_when_not_found() {
+        let server = MockServer::start().await;
+        mock_activity_response(&server, with_rate_limit_headers(ResponseTemplate::new(404))).await;
+
+        let response = api_for(&server)
+            .get_activity_by_id(1, "token")
+            .await
+            .unwrap();
+        assert!(response.data.is_none());
+        assert_eq!(response.rate_limit, Some(expected_rate_limit()));
     }
 
     #[tokio::test]
@@ -132,7 +223,7 @@ mod tests {
             .get_activity_by_id(1, "token")
             .await
             .unwrap();
-        assert!(activity.is_none());
+        assert!(activity.data.is_none());
     }
 
     #[tokio::test]
@@ -154,13 +245,21 @@ mod tests {
     #[tokio::test]
     async fn maps_rate_limited() {
         let server = MockServer::start().await;
-        mock_activity_response(&server, ResponseTemplate::new(429)).await;
+        mock_activity_response(
+            &server,
+            with_rate_limit_headers(ResponseTemplate::new(429).set_body_string("slow down")),
+        )
+        .await;
 
         let error = api_for(&server)
             .get_activity_by_id(1, "token")
             .await
             .unwrap_err();
-        assert!(matches!(error, Error::RateLimited { .. }));
+        let Error::RateLimited { body, rate_limit } = error else {
+            panic!("expected RateLimited, got {error:?}");
+        };
+        assert_eq!(body, "slow down");
+        assert_eq!(rate_limit, Some(expected_rate_limit()));
     }
 
     #[tokio::test]
@@ -200,7 +299,9 @@ mod tests {
             .and(query_param("after", "1735689600"))
             .and(query_param("page", "2"))
             .and(query_param("per_page", "30"))
-            .respond_with(ResponseTemplate::new(200).set_body_string(r#"[{"id": 1}]"#))
+            .respond_with(with_rate_limit_headers(
+                ResponseTemplate::new(200).set_body_string(r#"[{"id": 1}]"#),
+            ))
             .mount(&server)
             .await;
 
@@ -208,7 +309,8 @@ mod tests {
             .get_logged_in_athlete_activities(Some(1767225600), Some(1735689600), 2, 30, "token")
             .await
             .unwrap();
-        assert_eq!(activities.len(), 1);
+        assert_eq!(activities.data.len(), 1);
+        assert_eq!(activities.rate_limit, Some(expected_rate_limit()));
     }
 
     #[tokio::test]
@@ -228,7 +330,7 @@ mod tests {
             .get_logged_in_athlete_activities(None, None, 1, 30, "token")
             .await
             .unwrap();
-        assert!(activities.is_empty());
+        assert!(activities.data.is_empty());
     }
 
     #[tokio::test]

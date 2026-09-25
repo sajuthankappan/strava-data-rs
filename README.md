@@ -36,13 +36,13 @@ use strava_data::{ApiClient, Configuration};
 let access_token = "<access_token>";
 let activity_id = 1234567890;
 let client = ApiClient::new(Configuration::new());
-let activity = client
+let response = client
     .activities_api
     .get_activity_by_id(activity_id, access_token)
     .await?;
 
 // None if the activity does not exist
-if let Some(activity) = activity {
+if let Some(activity) = response.data {
     println!("{:?}: {:?}", activity.name, activity.activity_type);
 }
 ```
@@ -57,7 +57,26 @@ let per_page = 30;
 let activities = client
     .activities_api
     .get_logged_in_athlete_activities(before, after, page, per_page, access_token)
+    .await?
+    .data;
+```
+
+## Rate limits
+
+Every successful call returns an `ApiResponse`, which holds the response `data` and the `rate_limit` Strava reported in its headers. `rate_limit` has an `overall` window (`X-RateLimit-*`) and a `read` window (`X-ReadRateLimit-*`), each with 15-minute and daily limits and usage. Any of these is `None` if Strava did not send the headers.
+
+```rust
+let response = client
+    .activities_api
+    .get_activity_by_id(activity_id, access_token)
     .await?;
+
+if let Some(read) = response.rate_limit.and_then(|rate_limit| rate_limit.read) {
+    println!(
+        "{}/{} read requests in the last 15 minutes, {}/{} today",
+        read.short_term_usage, read.short_term_limit, read.daily_usage, read.daily_limit
+    );
+}
 ```
 
 ## Error handling
@@ -65,15 +84,15 @@ let activities = client
 API calls return `strava_data::Error`, which distinguishes the failures callers usually handle differently.
 
 ```rust
-use strava_data::Error;
+use strava_data::{ApiResponse, Error};
 
 match client.activities_api.get_activity_by_id(activity_id, access_token).await {
-    Ok(Some(activity)) => println!("found {:?}", activity.name),
-    Ok(None) => println!("activity not found"),
+    Ok(ApiResponse { data: Some(activity), .. }) => println!("found {:?}", activity.name),
+    Ok(ApiResponse { data: None, .. }) => println!("activity not found"),
     // Access token missing, invalid, expired or lacking the required scope
     Err(Error::Unauthorized { body }) => eprintln!("refresh the access token: {body}"),
-    // Strava rate limit exceeded; retry later
-    Err(Error::RateLimited { body }) => eprintln!("rate limited: {body}"),
+    // Strava rate limit exceeded; `rate_limit` shows which window was exceeded
+    Err(Error::RateLimited { body, rate_limit }) => eprintln!("rate limited: {body} {rate_limit:?}"),
     // Any other error response from Strava
     Err(Error::Status { status, body }) => eprintln!("HTTP {status}: {body}"),
     // Network / TLS errors, or a response that does not match the models

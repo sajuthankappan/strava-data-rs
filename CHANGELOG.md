@@ -1,6 +1,8 @@
 ## Unreleased
 
 * Breaking: `get_logged_in_athlete_activities` now returns `Vec<SummaryActivity>` instead of `Vec<DetailedActivity>`, matching what Strava returns from `/athlete/activities`. `SummaryActivity` drops `description`, `calories`, `device_name` and `embed_token`, which were always `None` there, and adds `hide_from_home`
+* Breaking: `get_activity_by_id` and `get_logged_in_athlete_activities` now return an `ApiResponse`, which holds the response `data` and the `rate_limit` parsed from Strava's `X-RateLimit-*` and `X-ReadRateLimit-*` headers. A not-found activity is `ApiResponse { data: None, .. }`
+* Breaking: `Error::RateLimited` now has a `rate_limit` field with the rate limit headers from the 429 response
 * Make `weighted_average_watts` public on `DetailedActivity`
 
 ## 0.8.1
