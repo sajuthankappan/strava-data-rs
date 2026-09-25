@@ -176,6 +176,109 @@ pub struct SummaryActivity {
     pub weighted_average_watts: Option<i32>,
 }
 
+impl From<models::DetailedActivity> for SummaryActivity {
+    /// Keep the fields a summary activity has, dropping the detail-only ones
+    fn from(activity: models::DetailedActivity) -> Self {
+        // Listing every field, without `..`, makes adding a field to `DetailedActivity`
+        // a compile error here until it is either carried over or dropped
+        let models::DetailedActivity {
+            id,
+            external_id,
+            upload_id,
+            athlete,
+            name,
+            distance,
+            moving_time,
+            elapsed_time,
+            total_elevation_gain,
+            elev_high,
+            elev_low,
+            activity_type,
+            sport_type,
+            start_date,
+            start_date_local,
+            timezone,
+            utc_offset,
+            start_latlng,
+            end_latlng,
+            achievement_count,
+            kudos_count,
+            comment_count,
+            athlete_count,
+            photo_count,
+            total_photo_count,
+            map,
+            trainer,
+            commute,
+            manual,
+            private,
+            flagged,
+            workout_type,
+            upload_id_str,
+            average_speed,
+            max_speed,
+            has_kudoed,
+            hide_from_home,
+            gear_id,
+            kilojoules,
+            average_watts,
+            device_watts,
+            max_watts,
+            weighted_average_watts,
+            device_name,
+            description: _,
+            calories: _,
+            embed_token: _,
+        } = activity;
+        SummaryActivity {
+            id,
+            external_id,
+            upload_id,
+            athlete,
+            name,
+            distance,
+            moving_time,
+            elapsed_time,
+            total_elevation_gain,
+            elev_high,
+            elev_low,
+            activity_type,
+            sport_type,
+            start_date,
+            start_date_local,
+            timezone,
+            utc_offset,
+            start_latlng,
+            end_latlng,
+            achievement_count,
+            kudos_count,
+            comment_count,
+            athlete_count,
+            photo_count,
+            total_photo_count,
+            map,
+            trainer,
+            commute,
+            manual,
+            private,
+            flagged,
+            workout_type,
+            upload_id_str,
+            average_speed,
+            max_speed,
+            has_kudoed,
+            hide_from_home,
+            gear_id,
+            kilojoules,
+            average_watts,
+            device_watts,
+            max_watts,
+            weighted_average_watts,
+            device_name,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -207,5 +310,78 @@ mod tests {
         let map = activity.map.unwrap();
         assert_eq!(map.summary_polyline.as_deref(), Some("abc"));
         assert!(map.polyline.is_none());
+    }
+
+    #[test]
+    fn converts_from_detailed_activity() {
+        // Every field has a distinct value, so a field that is dropped or mixed up shows
+        // as a difference from the summary deserialized directly
+        let json = r#"{
+            "id": 1,
+            "external_id": "garmin_push_1",
+            "upload_id": 2,
+            "athlete": {"id": 3},
+            "name": "Morning Ride",
+            "distance": 40000.5,
+            "moving_time": 5400,
+            "elapsed_time": 6000,
+            "total_elevation_gain": 350.5,
+            "elev_high": 120.5,
+            "elev_low": 10.5,
+            "type": "Ride",
+            "sport_type": "GravelRide",
+            "start_date": "2026-09-20T06:00:00Z",
+            "start_date_local": "2026-09-20T11:30:00Z",
+            "timezone": "(GMT+05:30) Asia/Kolkata",
+            "utc_offset": 19800.0,
+            "start_latlng": [51.5074, -0.1278],
+            "end_latlng": [48.8566, 2.3522],
+            "achievement_count": 4,
+            "kudos_count": 5,
+            "comment_count": 6,
+            "athlete_count": 7,
+            "photo_count": 8,
+            "total_photo_count": 9,
+            "map": {"id": "a1", "polyline": "full", "summary_polyline": "abc"},
+            "trainer": false,
+            "commute": true,
+            "manual": false,
+            "private": true,
+            "flagged": false,
+            "workout_type": 10,
+            "upload_id_str": "2",
+            "average_speed": 7.5,
+            "max_speed": 15.5,
+            "has_kudoed": true,
+            "hide_from_home": false,
+            "gear_id": "b123",
+            "kilojoules": 900.5,
+            "average_watts": 180.5,
+            "device_watts": true,
+            "max_watts": 11,
+            "weighted_average_watts": 12,
+            "device_name": "Garmin Edge 840",
+            "description": "Easy spin",
+            "calories": 950.5,
+            "embed_token": "token"
+        }"#;
+        let detailed: models::DetailedActivity = serde_json::from_str(json).unwrap();
+        let direct: SummaryActivity = serde_json::from_str(json).unwrap();
+
+        let converted = SummaryActivity::from(detailed);
+        let converted = serde_json::to_value(converted).unwrap();
+        assert_eq!(converted, serde_json::to_value(direct).unwrap());
+        // The fixture covers every summary field
+        let nulls: Vec<_> = converted
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter(|(_, value)| value.is_null())
+            .map(|(key, _)| key)
+            .collect();
+        assert!(
+            nulls.is_empty(),
+            "fields missing from the fixture: {nulls:?}"
+        );
     }
 }
