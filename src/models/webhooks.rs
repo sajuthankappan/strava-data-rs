@@ -24,7 +24,7 @@ pub struct WebhookEventData {
     pub object_id: i64,
     pub aspect_type: WebhookEventDataAspectType,
     pub updates: WebhookEventDataUpdates,
-    pub owner_id: i32,
+    pub owner_id: i64,
     pub subscription_id: i64,
     pub event_time: i64,
 }
@@ -50,4 +50,27 @@ pub enum WebhookEventDataAspectType {
     Update,
     #[serde(rename = "delete")]
     Delete,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserializes_64_bit_ids() {
+        let event: WebhookEventData = serde_json::from_str(
+            r#"{
+                "object_type": "activity",
+                "object_id": 9007199254740993,
+                "aspect_type": "create",
+                "updates": {},
+                "owner_id": 9007199254740995,
+                "subscription_id": 120475,
+                "event_time": 1516126040
+            }"#,
+        )
+        .unwrap();
+        assert_eq!(event.object_id, 9_007_199_254_740_993);
+        assert_eq!(event.owner_id, 9_007_199_254_740_995);
+    }
 }

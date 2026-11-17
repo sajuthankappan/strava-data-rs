@@ -5,7 +5,7 @@ use std::vec::Vec;
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct SummaryAthlete {
     /// The unique identifier of the athlete
-    pub id: Option<i32>,
+    pub id: Option<i64>,
     /// Resource state, indicates level of detail. Possible values: 1 -> \"meta\", 2 -> \"summary\", 3 -> \"detail\"
     pub resource_state: Option<i32>,
     /// The athlete's first name.
