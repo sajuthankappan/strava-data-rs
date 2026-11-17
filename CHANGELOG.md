@@ -1,3 +1,7 @@
+## 0.10.0
+
+* Breaking: athlete IDs are now `i64` instead of `i32`: `id` on `MetaAthlete`, `SummaryAthlete` and `DetailedAthlete`, and `owner_id` on `WebhookEventData`. Strava will send 64-bit athlete and activity IDs after June 1, 2027. Activity IDs were already `i64`. Serialized output is unchanged
+
 ## 0.9.1
 
 * Add `photos`, `gear`, `segment_efforts`, `splits_metric`, `splits_standard`, `laps` and `best_efforts` to `DetailedActivity`, with new `PhotosSummary`, `PhotosSummaryPrimary`, `Split`, `Lap`, `MetaActivity`, `DetailedSegmentEffort`, `SummarySegmentEffort`, `SummaryPrSegmentEffort` and `SummarySegment` models. These fields add to `DetailedActivity`'s serialized output, and segment efforts can make it much larger
